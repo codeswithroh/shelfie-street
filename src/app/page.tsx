@@ -1,103 +1,113 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Nav } from "@/components/Brand";
+import { DemoButton } from "@/components/DemoButton";
+import { listShops, listProducts } from "@/lib/db";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+const steps = [
+  { n: "01", title: "Snap your shelf", body: "Photograph your shelf, counter, menu board or price list. Claude reads every item, price and attribute." },
+  { n: "02", title: "Go live for agents", body: "Your catalog lands in PayPal and gets its own MCP server, product feed and llms.txt. Claude, ChatGPT and other agents can find it." },
+  { n: "03", title: "Get paid on PayPal", body: "Agents quote and order; buyers approve on PayPal. A front-desk agent handles status checks and refunds under your rules." },
+];
+
+export default async function Home() {
+  const shops = await Promise.all((await listShops()).map(async (s) => ({ ...s, itemCount: (await listProducts(s.id)).length })));
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <Nav>
+        <Link href="/onboard" className="btn btn-primary">Create a shop</Link>
+      </Nav>
+      <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        <section className="grid items-center gap-10 pt-10 lg:grid-cols-[1.15fr_1fr] lg:pt-16">
+          <div>
+            <span className="pill bg-sage-soft text-sage">
+              <span className="live-dot" /> Built on PayPal + Claude
+            </span>
+            <h1 className="font-display mt-5 text-5xl leading-[1.02] sm:text-7xl">
+              Snap your shelf.<br />
+              <span className="text-tomato">Sell to AI agents</span> by lunch.
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-ink-2">
+              People are starting to shop through AI assistants, but the bakery down the street has no API, no product feed and no
+              checkout an agent can use. Shelfie gives any small shop all three from one photo, with PayPal handling payment.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/onboard" className="btn btn-accent text-base">📸 Snap my shelf</Link>
+              <DemoButton />
+            </div>
+          </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+          <div className="card relative overflow-hidden p-5">
+            <div className="label">What an agent sees</div>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-ink p-4 font-mono text-[12.5px] leading-relaxed text-paper">
+{`> search_products("2 vegan loaves for Saturday")
+✓ Country Sourdough Loaf   $9.00  vegan
+✓ Seeded Rye              $10.00  vegan
+
+> create_order(2 × Country Sourdough)
+→ approve on PayPal:
+  https://www.sandbox.paypal.com/checkoutnow?…
+
+> search_products("gluten-free bread")
+✗ not_available: "gluten-free bread"
+  ↳ logged as demand gap for the owner`}
+            </pre>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="tag">$9.00 sourdough</span>
+              <span className="tag">$4.75 croissant</span>
+              <span className="tag">$5.00 cardamom bun</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-24 grid gap-4 md:grid-cols-3">
+          {steps.map((s) => (
+            <div key={s.n} className="card p-6">
+              <div className="font-mono text-sm text-tomato">{s.n}</div>
+              <h3 className="font-display mt-2 text-3xl">{s.title}</h3>
+              <p className="mt-2 text-ink-2">{s.body}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-16 card grid gap-6 p-6 md:grid-cols-[1fr_2fr] md:p-8">
+          <div>
+            <div className="label">The standout feature</div>
+            <h2 className="font-display text-4xl">Demand gaps</h2>
+          </div>
+          <p className="text-lg text-ink-2">
+            Every time an agent asks for something you don&apos;t sell, Shelfie records it. <em>“Agents asked for gluten-free bread 14 times this
+            week.”</em> One click drafts the product with Claude and puts it in your PayPal catalog. You find out what AI shoppers want before
+            you lose the sale.
+          </p>
+        </section>
+
+        {shops.length > 0 && (
+          <section className="mt-16">
+            <h2 className="font-display text-4xl">Live shops</h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {shops.map((s) => (
+                <div key={s.id} className="card flex flex-col p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="pill bg-paper-2 text-ink-2 capitalize">{s.category || "shop"}</span>
+                    <span className="font-mono text-xs text-ink-3">{s.itemCount} items</span>
+                  </div>
+                  <h3 className="font-display mt-3 text-3xl">{s.name}</h3>
+                  <p className="mt-1 line-clamp-2 text-sm text-ink-2">{s.tagline}</p>
+                  <div className="mt-auto flex gap-2 pt-5">
+                    <Link className="btn btn-primary py-2 text-sm" href={`/dashboard/${s.slug}`}>Dashboard</Link>
+                    <Link className="btn btn-ghost py-2 text-sm" href={`/s/${s.slug}/try`}>Shop as an agent</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      <footer className="mx-auto max-w-6xl px-4 pb-10 text-sm text-ink-3 sm:px-6">
+        Shelfie · PayPal sandbox · Claude · Built for the PayPal AI Hackathon
       </footer>
-    </div>
+    </>
   );
 }

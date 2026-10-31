@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  --color-paper: #f5f0e6;
+  --color-paper-2: #ece5d6;
+  --color-card: #fffdf8;
+  --color-ink: #1d1b17;
+  --color-ink-2: #5b5548;
+  --color-ink-3: #8f8778;
+  --color-line: #d9d0bd;
+  --color-tomato: #e0532f;
+  --color-tomato-ink: #b23a1a;
+  --color-sage: #4f6f52;
+  --color-sage-soft: #dfe8d9;
+  --color-butter: #f3d98b;
+  --color-sky: #2f5d8a;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* paper grain */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: radial-gradient(rgba(60, 45, 20, 0.07) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+main, header, footer { position: relative; z-index: 1; }
+
+.font-display { font-family: var(--font-display), Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+
+/* price tag chip */
+.tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.9rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.75rem;
+  background: var(--color-butter);
+  color: var(--color-ink);
+  clip-path: polygon(0.45rem 0, 100% 0, 100% 100%, 0.45rem 100%, 0 50%);
+}
+.tag::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  width: 0.22rem;
+  height: 0.22rem;
+  margin-top: -0.11rem;
+  border-radius: 999px;
+  background: var(--color-paper);
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(29, 27, 23, 0.04), 0 8px 24px -16px rgba(29, 27, 23, 0.25);
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  border-radius: 999px; padding: 0.6rem 1.1rem; font-weight: 600; font-size: 0.9rem;
+  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--color-ink); color: var(--color-paper); }
+.btn-primary:hover:not(:disabled) { background: #000; box-shadow: 0 6px 18px -8px rgba(0,0,0,0.6); }
+.btn-accent { background: var(--color-tomato); color: #fff; }
+.btn-accent:hover:not(:disabled) { background: var(--color-tomato-ink); }
+.btn-ghost { background: transparent; color: var(--color-ink); border: 1px solid var(--color-line); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-paper-2); }
+
+.input {
+  width: 100%; background: #fff; border: 1px solid var(--color-line); border-radius: 10px;
+  padding: 0.55rem 0.75rem; font-size: 0.92rem; outline: none;
+}
+.input:focus { border-color: var(--color-ink); box-shadow: 0 0 0 3px rgba(29,27,23,0.08); }
+
+.label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-ink-3); margin-bottom: 0.3rem; font-weight: 600; }
+
+.pill { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.72rem; font-weight: 600; }
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+.live-dot { width: 8px; height: 8px; border-radius: 999px; background: #3fa34d; animation: pulse-dot 1.6s ease-in-out infinite; }
+
+@keyframes flash-in { from { background: #fff4c2; } to { background: transparent; } }
+.flash { animation: flash-in 2.4s ease-out; }
+
+@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+.scanline { position: absolute; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--color-tomato), transparent); animation: scan 1.6s ease-in-out infinite alternate; }

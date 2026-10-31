@@ -1,0 +1,8 @@
+.next
+.next-build
+node_modules
+data
+.env*
+!.env.example
+.claude
+render.yaml
