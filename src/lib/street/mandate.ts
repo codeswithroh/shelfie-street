@@ -17,8 +17,9 @@ declare global {
 
 function privateKey() {
   if (globalThis.__mandateKey) return globalThis.__mandateKey;
-  const pem = process.env.MANDATE_SIGNING_KEY?.replace(/\\n/g, "\n");
-  if (pem) return (globalThis.__mandateKey = createPrivateKey(pem));
+  // Base64 of a PKCS#8 DER Ed25519 key
+  const der = process.env.MANDATE_SIGNING_KEY;
+  if (der) return (globalThis.__mandateKey = createPrivateKey({ key: Buffer.from(der, "base64"), format: "der", type: "pkcs8" }));
   if (process.env.VERCEL) throw new Error("MANDATE_SIGNING_KEY is not set");
   // Local development only: a signature from this key won't survive a restart.
   return (globalThis.__mandateKey = generateKeyPairSync("ed25519").privateKey);
