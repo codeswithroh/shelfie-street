@@ -98,7 +98,7 @@ export const CatalogMatch = z.object({
     ),
 });
 
-export async function matchCatalog(shop: Shop, products: Product[], query: string) {
+export async function matchCatalog(shop: Shop, products: Product[], query: string, substitute = false) {
   const catalog = products
     .map((p) => `- id=${p.id} | ${p.name} | ${(p.price_cents / 100).toFixed(2)} ${shop.currency} | stock ${p.stock} | tags: ${p.tags.join(", ")} | ${p.description}`)
     .join("\n");
@@ -106,7 +106,7 @@ export async function matchCatalog(shop: Shop, products: Product[], query: strin
     schema: CatalogMatch,
     effort: "low",
     maxTokens: 4000,
-    system: `You are the product search engine for ${shop.name} (${shop.category}). Match shopping-agent requests to the catalog strictly; do not stretch matches.`,
+    system: `You are the product search engine for ${shop.name} (${shop.category}). ${substitute ? "The buyer's first choice fell through. Return the closest product that does the same job, even if the style or format differs. Only return nothing if the shop has no product for that purpose." : "Match shopping-agent requests to the catalog strictly; do not stretch matches."}`,
     content: [{ type: "text", text: `Catalog:\n${catalog || "(empty)"}\n\nAgent request: ${query}` }],
   });
 }

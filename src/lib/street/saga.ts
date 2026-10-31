@@ -100,7 +100,7 @@ async function recover(missionId: string, failed: Line, reason: string): Promise
   const lines = await listLines(missionId);
   const excluded = lines.filter((l) => l.need_key === failed.need_key).map((l) => l.shop_id);
   // A substitute only has to do the same job, so search more loosely than the first pass.
-  const options = await findOptions({ ...need, query: `Closest acceptable substitute for: ${need.label}. Any product that does the same job counts.` }, await openShops(), excluded);
+  const options = await findOptions(need, await openShops(), excluded, true);
   const others = liveTotal(lines);
 
   for (const o of options.sort((a, b) => optionCost(a) - optionCost(b))) {

@@ -27,12 +27,12 @@ export async function decomposeGoal(goal: string, budgetCents: number, shops: Sh
 
 export type Option = { need: Need; shop: Shop; product: Product };
 
-export async function findOptions(need: Need, shops: Shop[], excludeShopIds: string[] = []): Promise<Option[]> {
+export async function findOptions(need: Need, shops: Shop[], excludeShopIds: string[] = [], substitute = false): Promise<Option[]> {
   const candidates = shops.filter((s) => s.category === need.category && !excludeShopIds.includes(s.id));
   const found = await Promise.all(candidates.map(async (shop) => {
     const products = (await listProducts(shop.id)).filter((p) => p.stock >= need.quantity);
     if (!products.length) return null;
-    const match = await matchCatalog(shop, products, need.query);
+    const match = await matchCatalog(shop, products, need.query, substitute);
     const product = products.find((p) => p.id === match.product_ids[0]);
     return product ? { need, shop, product } : null;
   }));
