@@ -1,5 +1,5 @@
 // A ready-made demo shop so judges can try the agent flow without photographing anything.
-import { createProduct, createShop, getShop, setPaypalProductId } from "./db";
+import { type Shop, createProduct, createShop, getShop, run, setPaypalProductId } from "./db";
 import { createCatalogProduct, paypalConfigured } from "./paypal";
 
 const DEMO = {
@@ -45,4 +45,64 @@ export async function ensureDemoShop() {
     }),
   );
   return { slug: shop.slug, created: true, warnings };
+}
+
+const POLICY = "Refund missing or damaged items in full. No refund for change of mind. Escalate anything unusual to the owner.";
+type P = { name: string; price_cents: number; stock: number; tags: string[]; description: string };
+const STREET: { name: string; slug: string; tagline: string; category: string; products: P[] }[] = [
+  {
+    name: "Golden Crust", slug: "golden-crust", tagline: "Old-school bakery known for celebration cakes.", category: "bakery",
+    products: [
+      { name: "Vanilla Celebration Cake", price_cents: 4800, stock: 4, tags: ["cake", "birthday", "serves 12"], description: "Three-layer vanilla sponge with buttercream. Serves 12." },
+      { name: "Chocolate Fudge Cake", price_cents: 5200, stock: 3, tags: ["cake", "birthday", "chocolate", "serves 12"], description: "Dark chocolate layers with fudge frosting. Serves 12." },
+    ],
+  },
+  {
+    name: "Petal & Stem", slug: "petal-stem", tagline: "Seasonal flowers tied to order.", category: "florist",
+    products: [
+      { name: "Bright Birthday Bouquet", price_cents: 3500, stock: 5, tags: ["flowers", "birthday", "bouquet"], description: "Gerberas and tulips in bright colours." },
+      { name: "Table Posy", price_cents: 1200, stock: 12, tags: ["flowers", "table", "small"], description: "Small posy for a table centre." },
+    ],
+  },
+  {
+    name: "Wild Bunch", slug: "wild-bunch", tagline: "Loose, garden-style flowers.", category: "florist",
+    products: [{ name: "Garden Birthday Bunch", price_cents: 4200, stock: 4, tags: ["flowers", "birthday", "bouquet"], description: "Loose garden flowers wrapped in paper." }],
+  },
+  {
+    name: "Pop Party Supply", slug: "pop-party", tagline: "Balloons, candles and paper goods.", category: "party supplies",
+    products: [
+      { name: "Balloon Pack (12)", price_cents: 1400, stock: 20, tags: ["balloons", "birthday"], description: "12 helium-quality latex balloons in mixed colours." },
+      { name: "Number Candle Set", price_cents: 600, stock: 30, tags: ["candles", "birthday", "cake"], description: "Gold number candles, 0 to 9." },
+      { name: "Party Plates & Cups for 12", price_cents: 1600, stock: 15, tags: ["tableware", "serves 12"], description: "Paper plates, cups and napkins for 12." },
+    ],
+  },
+  {
+    name: "Corner Market", slug: "corner-market", tagline: "Drinks and snacks, open late.", category: "grocery",
+    products: [
+      { name: "Sparkling Lemonade Case (12)", price_cents: 1800, stock: 10, tags: ["drinks", "non-alcoholic", "serves 12"], description: "12 cans of sparkling lemonade." },
+      { name: "Fruit Platter", price_cents: 2800, stock: 4, tags: ["fruit", "vegan", "serves 12"], description: "Cut seasonal fruit for 12." },
+    ],
+  },
+];
+
+async function joinStreet(shop: Shop) {
+  await run("INSERT OR IGNORE INTO street_shops (shop_id, payout_email) VALUES (?, ?)", [shop.id, `${shop.slug}@shelfie-demo.example`]);
+}
+
+export async function ensureDemoStreet() {
+  await ensureDemoShop();
+  await joinStreet((await getShop("crumb-co"))!);
+  for (const { products, slug, ...fields } of STREET) {
+    let shop = await getShop(slug);
+    if (!shop) {
+      shop = await createShop({ ...fields, location: "Mission District, San Francisco", fulfillment: "pickup", currency: "USD", policy: POLICY, auto_refund_limit_cents: 1500 });
+      for (const p of products) {
+        const product = await createProduct({ ...p, shop_id: shop.id, paypal_product_id: null, source: "demo" });
+        if (!paypalConfigured()) continue;
+        const pp = await createCatalogProduct({ name: p.name, description: p.description, sku: `SHLF-${product.id}` });
+        await setPaypalProductId(product.id, pp.id);
+      }
+    }
+    await joinStreet(shop);
+  }
 }

@@ -9,6 +9,75 @@ export const newId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 12);
 const DB_URL = process.env.TURSO_DATABASE_URL ?? `file:${path.join(process.cwd(), "data", "shelfie.db")}`;
 
 const SCHEMA = `
+    CREATE TABLE IF NOT EXISTS street_shops (
+      shop_id TEXT PRIMARY KEY REFERENCES shops(id),
+      payout_email TEXT NOT NULL,
+      floor_pct INTEGER NOT NULL DEFAULT 90,
+      is_open INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS agents (
+      name TEXT PRIMARY KEY,
+      trust INTEGER NOT NULL DEFAULT 70,
+      blocked INTEGER NOT NULL DEFAULT 0,
+      last_seen TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS firewall_events (
+      id TEXT PRIMARY KEY,
+      agent_name TEXT NOT NULL,
+      shop_id TEXT,
+      verdict TEXT NOT NULL,
+      rule TEXT NOT NULL,
+      input TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS missions (
+      id TEXT PRIMARY KEY,
+      goal TEXT NOT NULL,
+      buyer TEXT NOT NULL,
+      budget_cents INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      needs TEXT NOT NULL DEFAULT '[]',
+      mandate TEXT,
+      signature TEXT,
+      paypal_order_id TEXT,
+      approve_url TEXT,
+      authorization_id TEXT,
+      authorized_cents INTEGER NOT NULL DEFAULT 0,
+      captured_cents INTEGER NOT NULL DEFAULT 0,
+      failure TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS mission_lines (
+      id TEXT PRIMARY KEY,
+      mission_id TEXT NOT NULL REFERENCES missions(id),
+      need_key TEXT NOT NULL,
+      shop_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      unit_cents INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      proof TEXT,
+      capture_id TEXT,
+      payout_batch_id TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS ledger (
+      id TEXT PRIMARY KEY,
+      mission_id TEXT NOT NULL,
+      seq INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      actor TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL DEFAULT 0,
+      detail TEXT NOT NULL,
+      prev_hash TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      UNIQUE (mission_id, seq)
+    );
+    CREATE INDEX IF NOT EXISTS idx_lines_mission ON mission_lines(mission_id);
+    CREATE INDEX IF NOT EXISTS idx_ledger_created ON ledger(created_at);
     CREATE TABLE IF NOT EXISTS shops (
       id TEXT PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,
@@ -91,12 +160,12 @@ type Row = Record<string, unknown>;
 const toRows = (rs: ResultSet): Row[] =>
   rs.rows.map((r) => Object.fromEntries(rs.columns.map((c, i) => [c, r[i]])));
 
-async function query(sql: string, args: InArgs = []): Promise<Row[]> {
+export async function query(sql: string, args: InArgs = []): Promise<Row[]> {
   return toRows(await (await db()).execute({ sql, args }));
 }
 
-async function run(sql: string, args: InArgs = []): Promise<void> {
-  await (await db()).execute({ sql, args });
+export async function run(sql: string, args: InArgs = []): Promise<number> {
+  return (await (await db()).execute({ sql, args })).rowsAffected;
 }
 
 export const now = () => new Date().toISOString();

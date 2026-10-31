@@ -23,7 +23,7 @@ export const FALLBACK = {
 
 type ImageInput = { mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif"; data: string };
 
-async function parse<T extends z.ZodType>(opts: {
+export async function parseStructured<T extends z.ZodType>(opts: {
   schema: T;
   system: string;
   content: Anthropic.Beta.BetaContentBlockParam[];
@@ -77,7 +77,7 @@ export async function extractCatalog(images: ImageInput[], text: string, currenc
       (text ? `\n\nMerchant notes / pasted menu:\n${text}` : "") +
       `\n\nCurrency: ${currency}. One product per distinct sellable item (merge duplicates, split sizes into separate products only if priced differently).`,
   });
-  return parse({
+  return parseStructured({
     schema: ExtractedCatalog,
     effort: "medium",
     system:
@@ -102,7 +102,7 @@ export async function matchCatalog(shop: Shop, products: Product[], query: strin
   const catalog = products
     .map((p) => `- id=${p.id} | ${p.name} | ${(p.price_cents / 100).toFixed(2)} ${shop.currency} | stock ${p.stock} | tags: ${p.tags.join(", ")} | ${p.description}`)
     .join("\n");
-  return parse({
+  return parseStructured({
     schema: CatalogMatch,
     effort: "low",
     maxTokens: 4000,
@@ -122,7 +122,7 @@ export const ProductDraft = z.object({
 });
 
 export async function draftProductForGap(shop: Shop, products: Product[], label: string, examples: string[]) {
-  return parse({
+  return parseStructured({
     schema: ProductDraft,
     effort: "low",
     maxTokens: 4000,

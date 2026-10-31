@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Shop } from "./db";
 import * as commerce from "./commerce";
 import { frontDesk } from "./frontdesk";
+import { screenInput } from "./street/firewall";
 
 const cartLine = z.object({
   product_id: z.string().describe("Product id from search_products or list_catalog"),
@@ -103,8 +104,16 @@ export const shopTools: ShopTool[] = [
   },
 ];
 
+// Free text from outside agents that reaches a model or a merchant.
+const SCREENED: Record<string, string> = { search_products: "query", ask_shop: "question", request_refund: "reason", create_order: "note" };
+
 export async function runShopTool(tool: ShopTool, shop: Shop, input: Record<string, unknown>, ctx: commerce.AgentCtx) {
   try {
+    const field = SCREENED[tool.name];
+    if (field && input[field]) {
+      const screen = await screenInput(ctx.agentName, shop.id, String(input[field]));
+      if (!screen.allowed) return { ok: false, text: `Blocked by the shop's agent firewall (${screen.rule}).` };
+    }
     return { ok: true, text: JSON.stringify(await tool.run(shop, input, ctx), null, 2) };
   } catch (e) {
     return { ok: false, text: `Error: ${(e as Error).message}` };

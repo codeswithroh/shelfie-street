@@ -131,6 +131,48 @@ export async function captureOrder(id: string) {
   return { status: res.status, captureId: capture?.id ?? null, payerName: name, payerEmail: res.payer?.email_address ?? "" };
 }
 
+// ---------- Authorize, partial capture, void: one approval, many settlements ----------
+
+export async function createAuthorizeOrder(o: { referenceId: string; cents: number; currency: string; description: string; brand: string; returnUrl: string; cancelUrl: string }) {
+  const order = await call<PayPalOrder>("POST", "/v2/checkout/orders", {
+    intent: "AUTHORIZE",
+    purchase_units: [{ reference_id: o.referenceId, custom_id: o.referenceId, description: o.description.slice(0, 127), amount: amount(o.cents, o.currency) }],
+    application_context: { brand_name: o.brand, shipping_preference: "NO_SHIPPING", user_action: "CONTINUE", return_url: o.returnUrl, cancel_url: o.cancelUrl },
+  }, { "PayPal-Request-Id": `auth-order-${o.referenceId}` });
+  const approveUrl = order.links.find((l) => l.rel === "payer-action" || l.rel === "approve")?.href;
+  if (!approveUrl) throw new PayPalError("PayPal did not return an approval link", 502);
+  return { paypalOrderId: order.id, approveUrl };
+}
+
+export async function authorizeOrder(paypalOrderId: string) {
+  const res = await call<{ status: string; purchase_units?: { payments?: { authorizations?: { id: string; status: string; expiration_time?: string }[] } }[] }>(
+    "POST", `/v2/checkout/orders/${paypalOrderId}/authorize`, {}, { "PayPal-Request-Id": `authorize-${paypalOrderId}` },
+  );
+  const auth = res.purchase_units?.[0]?.payments?.authorizations?.[0];
+  if (!auth) throw new PayPalError("PayPal returned no authorization", 502);
+  return { authorizationId: auth.id, status: auth.status, expires: auth.expiration_time ?? null };
+}
+
+export async function captureAuthorization(authorizationId: string, cents: number, currency: string, idempotencyKey: string, invoiceId: string) {
+  return call<{ id: string; status: string }>("POST", `/v2/payments/authorizations/${authorizationId}/capture`, {
+    amount: amount(cents, currency), final_capture: false, invoice_id: invoiceId,
+  }, { "PayPal-Request-Id": `capture-${idempotencyKey}` });
+}
+
+export async function voidAuthorization(authorizationId: string) {
+  await call("POST", `/v2/payments/authorizations/${authorizationId}/void`, {}, { "PayPal-Request-Id": `void-${authorizationId}` });
+}
+
+// ---------- Payouts ----------
+
+export async function sendPayout(p: { batchId: string; email: string; cents: number; currency: string; note: string }) {
+  const res = await call<{ batch_header: { payout_batch_id: string; batch_status: string } }>("POST", "/v1/payments/payouts", {
+    sender_batch_header: { sender_batch_id: p.batchId, email_subject: "Your Shelfie Street payout" },
+    items: [{ recipient_type: "EMAIL", receiver: p.email, amount: { value: (p.cents / 100).toFixed(2), currency: p.currency }, note: p.note.slice(0, 255), sender_item_id: p.batchId }],
+  });
+  return { batchId: res.batch_header.payout_batch_id, status: res.batch_header.batch_status };
+}
+
 // ---------- Refunds ----------
 
 export async function refundCapture(captureId: string, cents: number, currency: string, note: string) {

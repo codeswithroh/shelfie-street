@@ -7,8 +7,8 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const display = Instrument_Serif({ variable: "--font-display", subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
-  title: "Shelfie — make any shop buyable by AI agents",
-  description: "Snap a photo of your shelf. Shelfie turns it into a PayPal-powered store that AI shopping agents can find, quote and buy from.",
+  title: "Shelfie Street",
+  description: "One PayPal approval lets an AI agent buy across several independent shops, all or nothing.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
