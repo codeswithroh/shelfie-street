@@ -39,22 +39,27 @@ export async function planMission(goal: string, buyer: string, budgetCents: numb
     await addLine({ mission_id: mission.id, need_key: o.need.key, shop_id: o.shop.id, product_id: o.product.id, product_name: o.product.name, quantity: o.need.quantity, unit_cents: o.product.price_cents });
   }
 
-  // Authorize the full budget, not the basket total: the gap is what lets the agent recover without asking again.
-  const mandate: Mandate = {
-    mission_id: mission.id, buyer, ceiling_cents: budgetCents, currency: CURRENCY,
-    categories: [...new Set(plan.needs.map((n) => n.category))],
-    expires_at: new Date(Date.now() + 3 * 864e5).toISOString(),
-  };
-  const signature = signMandate(mandate);
-  const pp = await paypal.createAuthorizeOrder({
-    referenceId: mission.id, cents: budgetCents, currency: CURRENCY, brand: "Shelfie Street",
-    description: `Up to ${money(budgetCents)}: ${goal}`,
-    returnUrl: `${appUrl()}/app/missions/${mission.id}?approved=1`,
-    cancelUrl: `${appUrl()}/app/missions/${mission.id}?cancelled=1`,
-  });
-  await updateMission(mission.id, { status: "AWAITING_APPROVAL", mandate, signature, paypal_order_id: pp.paypalOrderId, approve_url: pp.approveUrl });
-  await appendLedger(mission.id, "MANDATE_SIGNED", "buyer-agent", budgetCents, `Ceiling ${money(budgetCents)}, ${mandate.categories.join(", ")}, key ${mandateFingerprint(signature)}`);
-  await appendLedger(mission.id, "BASKET_PLANNED", "buyer-agent", basket.reduce((s, o) => s + optionCost(o), 0), `${basket.length} lines across ${new Set(basket.map((o) => o.shop.id)).size} shops`);
+  try {
+    // Authorize the full budget, not the basket total: the gap is what lets the agent recover without asking again.
+    const mandate: Mandate = {
+      mission_id: mission.id, buyer, ceiling_cents: budgetCents, currency: CURRENCY,
+      categories: [...new Set(plan.needs.map((n) => n.category))],
+      expires_at: new Date(Date.now() + 3 * 864e5).toISOString(),
+    };
+    const signature = signMandate(mandate);
+    const pp = await paypal.createAuthorizeOrder({
+      referenceId: mission.id, cents: budgetCents, currency: CURRENCY, brand: "Shelfie Street",
+      description: `Up to ${money(budgetCents)}: ${goal}`,
+      returnUrl: `${appUrl()}/app/missions/${mission.id}?approved=1`,
+      cancelUrl: `${appUrl()}/app/missions/${mission.id}?cancelled=1`,
+    });
+    await updateMission(mission.id, { status: "AWAITING_APPROVAL", mandate, signature, paypal_order_id: pp.paypalOrderId, approve_url: pp.approveUrl });
+    await appendLedger(mission.id, "MANDATE_SIGNED", "buyer-agent", budgetCents, `Ceiling ${money(budgetCents)}, ${mandate.categories.join(", ")}, key ${mandateFingerprint(signature)}`);
+    await appendLedger(mission.id, "BASKET_PLANNED", "buyer-agent", basket.reduce((s, o) => s + optionCost(o), 0), `${basket.length} lines across ${new Set(basket.map((o) => o.shop.id)).size} shops`);
+  } catch (e) {
+    await updateMission(mission.id, { status: "ABORTED", failure: (e as Error).message.slice(0, 200) });
+    throw e;
+  }
   return (await getMission(mission.id))!;
 }
 
