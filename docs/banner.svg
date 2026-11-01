@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="55%" r="55%"><stop stop-color="#5b4bff" stop-opacity=".6"/><stop offset="1" stop-color="#0f1218" stop-opacity="0"/></radialGradient>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.3" fill="#fff" opacity=".14"/></pattern>
+  </defs>
+  <rect width="1280" height="400" fill="#0f1218"/><rect width="1280" height="400" fill="url(#dots)"/><rect width="1280" height="400" fill="url(#glow)"/>
+  <g transform="translate(80 92) scale(.78)"><path d="M22 11h31L43 23H12z" fill="#fff" transform="scale(1)"/><path d="M12 23h17l23 18H35z" fill="#7da2ff"/><path d="M42 53H11l10-12h31z" fill="#fff"/></g>
+  <text x="136" y="130" font-size="34" font-weight="600" fill="#fff" letter-spacing="-.6">Shelfie Street</text>
+  <text x="84" y="226" font-size="58" font-weight="600" fill="#fff" letter-spacing="-1.6">One PayPal approval.</text>
+  <text x="84" y="294" font-size="58" font-weight="600" fill="#a6b0c3" letter-spacing="-1.6">Every shop on the street.</text>
+  <g transform="translate(980 118) scale(2.6)"><rect width="64" height="64" rx="15" fill="#fff" opacity=".05"/><path d="M22 11h31L43 23H12z" fill="#fff"/><path d="M12 23h17l23 18H35z" fill="#7da2ff"/><path d="M42 53H11l10-12h31z" fill="#fff"/></g>
+</svg>
