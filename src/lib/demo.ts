@@ -69,7 +69,7 @@ const STREET: { name: string; slug: string; tagline: string; category: string; p
     products: [{ name: "Garden Birthday Bunch", price_cents: 4200, stock: 4, tags: ["flowers", "birthday", "bouquet"], description: "Loose garden flowers wrapped in paper." }],
   },
   {
-    name: "Pop Party Supply", slug: "pop-party", tagline: "Balloons, candles and paper goods.", category: "party supplies",
+    name: "Pop Party Supply", slug: "pop-party-supply", tagline: "Balloons, candles and paper goods.", category: "party supplies",
     products: [
       { name: "Balloon Pack (12)", price_cents: 1400, stock: 20, tags: ["balloons", "birthday"], description: "12 helium-quality latex balloons in mixed colours." },
       { name: "Number Candle Set", price_cents: 600, stock: 30, tags: ["candles", "birthday", "cake"], description: "Gold number candles, 0 to 9." },

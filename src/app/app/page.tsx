@@ -44,7 +44,7 @@ export default function Overview() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Captured" value={usd(captured)} icon="$" />
-        <Kpi label="Released to buyers" value={usd(released)} icon="↩" color="#16a06a" />
+        <Kpi label="Released" value={usd(released)} icon="↩" color="#16a06a" />
         <Kpi label="Auto recoveries" value={String(count("SUBSTITUTED"))} icon="⟳" color="#ff9d42" />
         <Kpi label="Attacks blocked" value={String(blocked)} icon="⛨" color="#f062a8" />
       </div>
@@ -74,7 +74,7 @@ export default function Overview() {
             : <HatchRows rows={data.shops.slice(0, 4).map((s, i) => ({ label: s.name, value: s.stock, display: `${s.stock} units`, color: PALETTE[i % 6] }))} />}
         </Card>
         <Card title="Ledger activity" right={<span className="text-2xl font-semibold tracking-tight">{L.length}</span>}>
-          <DotHistogram values={bucket(L.map((e) => e.created_at), 28, 7 * day)} />
+          <DotHistogram values={bucket(L.map((e) => e.created_at), 13, 7 * day)} />
           <div className="mt-1 flex justify-between text-xs text-ink-3"><span>7 days ago</span><span>Now</span></div>
         </Card>
         <Card title="Agent traffic" right={<span className="text-2xl font-semibold tracking-tight">{data.agents.length}</span>}>
