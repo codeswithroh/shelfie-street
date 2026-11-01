@@ -1,18 +1,12 @@
 import Link from "next/link";
-import { useId } from "react";
 
 export function Logo({ size = 28 }: { size?: number }) {
-  const id = useId();
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
-      <defs>
-        <linearGradient id={id} x1="6" y1="4" x2="60" y2="62" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#2f6bff" /><stop offset="1" stopColor="#7b3ff2" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="16" fill={`url(#${id})`} />
-      <path d="M35 15H25.5a8.5 8.5 0 0 0 0 17h13a8.5 8.5 0 0 1 0 17H17" fill="none" stroke="#fff" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="48" cy="15" r="5.5" fill="#ffb35c" />
+      <rect width="64" height="64" rx="15" fill="#0f1218" />
+      <path d="M22 11h31L43 23H12z" fill="#fff" />
+      <path d="M12 23h17l23 18H35z" fill="#7da2ff" />
+      <path d="M42 53H11l10-12h31z" fill="#fff" />
     </svg>
   );
 }
