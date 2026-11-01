@@ -10,7 +10,7 @@ import type { AgentEvent, DemandGap, Order, Product, Shop } from "@/lib/db";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-type State = { shop: Shop; products: Product[]; orders: Order[]; events: AgentEvent[]; gaps: DemandGap[] };
+type State = { can_act: boolean; shop: Shop; products: Product[]; orders: Order[]; events: AgentEvent[]; gaps: DemandGap[] };
 
 const fmt = (cents: number, currency = "USD") => new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 const ago = (iso: string) => {
@@ -130,11 +130,12 @@ export default function Dashboard({ slug, mcpUrl, isNew, paypalReady }: { slug: 
 
   const onProductEdit = useCallback(async (e: CellValueChangedEvent<Product>) => {
     if (!e.data || !e.colDef.field) return;
-    await fetch(`/api/shops/${slug}/products`, {
+    const res = await fetch(`/api/shops/${slug}/products`, {
       method: "PATCH", headers: { "content-type": "application/json" },
       body: JSON.stringify({ id: e.data.id, [e.colDef.field]: e.newValue }),
     });
-    flash(`Updated ${e.data.name}`);
+    flash(res.ok ? `Updated ${e.data.name}` : "View only: this shop belongs to someone else");
+    load();
   }, [slug]);
 
   if (!state) return <div className="grid min-h-screen place-items-center text-ink-3">Opening the shop…</div>;
@@ -150,6 +151,7 @@ export default function Dashboard({ slug, mcpUrl, isNew, paypalReady }: { slug: 
         <Link href={`/s/${slug}/try`} className="btn btn-accent py-2 text-sm">Shop as an agent →</Link>
       </Nav>
       <main className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        {!state.can_act && <div className="mb-4 rounded-xl bg-paper-2 px-4 py-3 text-sm text-ink-2">View only. Add your own shop from a photo to manage one.</div>}
         {!paypalReady && (
           <div className="mb-4 rounded-xl border border-tomato bg-[#fbe7df] px-4 py-3 text-sm">
             PayPal sandbox credentials are not set. Add <code>PAYPAL_CLIENT_ID</code> and <code>PAYPAL_CLIENT_SECRET</code> to <code>.env.local</code> to take payments.
@@ -249,7 +251,7 @@ export default function Dashboard({ slug, mcpUrl, isNew, paypalReady }: { slug: 
               <p className="text-xs text-ink-3">Things agents asked for that you don&apos;t sell yet</p>
               <div className="mt-3 space-y-3">
                 {gaps.length === 0 && <div className="card p-4 text-sm text-ink-3">None yet. When an agent asks for something you don&apos;t sell, it shows up here.</div>}
-                {gaps.map((g) => <GapCard key={g.label} gap={g} slug={slug} currency={shop.currency} onDone={(m) => { flash(m); load(); }} />)}
+                {gaps.map((g) => <GapCard key={g.label} gap={g} canAct={state.can_act} slug={slug} currency={shop.currency} onDone={(m) => { flash(m); load(); }} />)}
               </div>
             </section>
 
@@ -281,7 +283,7 @@ export default function Dashboard({ slug, mcpUrl, isNew, paypalReady }: { slug: 
   );
 }
 
-function GapCard({ gap, slug, currency, onDone }: { gap: DemandGap; slug: string; currency: string; onDone: (msg: string) => void }) {
+function GapCard({ gap, canAct, slug, currency, onDone }: { gap: DemandGap; canAct: boolean; slug: string; currency: string; onDone: (msg: string) => void }) {
   const [draft, setDraft] = useState<null | { name: string; description: string; price_cents: number; tags: string[]; rationale: string }>(null);
   const [busy, setBusy] = useState(false);
   const [price, setPrice] = useState("");
@@ -317,7 +319,7 @@ function GapCard({ gap, slug, currency, onDone }: { gap: DemandGap; slug: string
       <ul className="mt-2 space-y-0.5 text-xs text-ink-2">
         {gap.examples.slice(0, 3).map((ex) => <li key={ex} className="truncate">“{ex}”</li>)}
       </ul>
-      {!draft ? (
+      {!canAct ? null : !draft ? (
         <div className="mt-3 flex gap-2">
           <button className="btn btn-primary px-3 py-1.5 text-xs" disabled={busy} onClick={makeDraft}>{busy ? "Drafting…" : "✨ Draft product"}</button>
           <button className="btn btn-ghost px-3 py-1.5 text-xs" onClick={dismiss}>Dismiss</button>

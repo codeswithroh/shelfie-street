@@ -1,11 +1,13 @@
+import { isOwner, notOwner } from "@/lib/guard";
 import { retryPayouts, settleIfReady } from "@/lib/street/saga";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!isOwner(req, id)) return notOwner();
   try {
-    const { id } = await params;
     await settleIfReady(id);
     await retryPayouts(id);
     return Response.json({ ok: true });

@@ -9,6 +9,7 @@ export default function Firewall() {
   const { data, reload } = useStreet();
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Result[] | null>(null);
+  const [limit, setLimit] = useState("");
   if (!data) return <Empty>Loading firewall…</Empty>;
   const blocked = data.firewall.filter((f) => f.verdict === "BLOCKED");
   return (
@@ -18,7 +19,8 @@ export default function Firewall() {
         <button className="btn btn-accent" disabled={busy} onClick={async () => {
           setBusy(true);
           const r = await fetch("/api/street/redteam", { method: "POST" });
-          setResults((await r.json()).results ?? []);
+          const json = await r.json();
+          if (json.results) setResults(json.results); else setLimit(json.error);
           await reload(); setBusy(false);
         }}>{busy ? "Attacking…" : "Run 5 live attacks"}</button>
       </div>
@@ -27,6 +29,7 @@ export default function Firewall() {
         <Stat label="Screened" value={String(data.firewall.length)} />
         <Stat label="Agents banned" value={String(data.agents.filter((a) => a.blocked).length)} tone="dark" />
       </div>
+      {limit && <Empty>{limit}</Empty>}
       {results && (
         <section className="card divide-y divide-line">
           {results.map((r) => (

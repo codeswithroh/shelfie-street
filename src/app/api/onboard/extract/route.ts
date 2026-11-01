@@ -1,3 +1,4 @@
+import { limited } from "@/lib/guard";
 import { extractCatalog } from "@/lib/ai";
 
 export const runtime = "nodejs";
@@ -7,6 +8,8 @@ const TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 type MediaType = (typeof TYPES)[number];
 
 export async function POST(req: Request) {
+  const over = await limited(req, "extract");
+  if (over) return over;
   const form = await req.formData();
   const text = String(form.get("text") ?? "");
   const currency = String(form.get("currency") ?? "USD");

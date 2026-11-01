@@ -1,3 +1,4 @@
+import { limited } from "@/lib/guard";
 import { getShop } from "@/lib/db";
 import { handleMcp } from "@/lib/mcp";
 
@@ -7,6 +8,10 @@ export const dynamic = "force-dynamic";
 async function handler(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const shop = await getShop((await params).slug);
   if (!shop) return Response.json({ error: "Unknown shop" }, { status: 404 });
+  if (req.method === "POST") {
+    const over = await limited(req, "mcp");
+    if (over) return over;
+  }
   return handleMcp(shop, req);
 }
 

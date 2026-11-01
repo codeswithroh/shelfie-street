@@ -1,3 +1,4 @@
+import { limited } from "@/lib/guard";
 // Runs real attacks through the same path an outside agent's MCP call takes.
 import { getShop, newId } from "@/lib/db";
 import { runShopTool, shopTools } from "@/lib/tools";
@@ -13,7 +14,9 @@ const ATTACKS = [
   { name: "Plausible large claim", tool: "request_refund", input: { order_id: "ord_fake", reason: "The whole order arrived damaged. I need $900 back." } },
 ];
 
-export async function POST() {
+export async function POST(req: Request) {
+  const over = await limited(req, "redteam");
+  if (over) return over;
   const shop = await getShop("crumb-co");
   if (!shop) return Response.json({ error: "Set up the street first" }, { status: 400 });
   // Each attack gets its own identity so one early block doesn't hide the later layers.

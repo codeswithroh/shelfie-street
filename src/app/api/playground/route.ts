@@ -1,3 +1,4 @@
+import { limited } from "@/lib/guard";
 // "Try it as an AI shopper": Claude acts as a buyer's personal shopping agent and uses
 // the exact same tools the public MCP server exposes.
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
@@ -12,7 +13,7 @@ export const maxDuration = 300;
 const Body = z.object({
   slug: z.string(),
   buyer: z.string().default("Alex"),
-  messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).min(1),
+  messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(2000) })).min(1).max(20),
 });
 
 export type PlaygroundStep = { tool: string; input: unknown; output: string; ok: boolean };
@@ -20,6 +21,8 @@ export type PlaygroundStep = { tool: string; input: unknown; output: string; ok:
 export async function POST(req: Request) {
   const body = Body.safeParse(await req.json());
   if (!body.success) return Response.json({ error: "Bad request" }, { status: 400 });
+  const over = await limited(req, "chat");
+  if (over) return over;
   const shop = await getShop(body.data.slug);
   if (!shop) return Response.json({ error: "Unknown shop" }, { status: 404 });
 

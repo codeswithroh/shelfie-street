@@ -1,3 +1,4 @@
+import { limited, ownerCookie } from "@/lib/guard";
 import { z } from "zod";
 import { createProduct, createShop, setPaypalProductId } from "@/lib/db";
 import { createCatalogProduct, paypalConfigured } from "@/lib/paypal";
@@ -26,12 +27,14 @@ const Body = z.object({
         tags: z.array(z.string()),
       }),
     )
-    .min(1),
+    .min(1).max(100),
 });
 
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? "Invalid body" }, { status: 400 });
+  const over = await limited(req, "publish");
+  if (over) return over;
   const shop = await createShop(parsed.data.shop);
   const warnings: string[] = [];
   // Mirror every product into the PayPal Catalog Products API.
@@ -47,5 +50,5 @@ export async function POST(req: Request) {
       }
     }),
   );
-  return Response.json({ slug: shop.slug, warnings });
+  return Response.json({ slug: shop.slug, warnings }, { headers: { "set-cookie": ownerCookie(shop.id) } });
 }

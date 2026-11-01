@@ -1,3 +1,4 @@
+import { isOwner, notOwner } from "@/lib/guard";
 import { z } from "zod";
 import { clearGap, createProduct, getProduct, getShop, setPaypalProductId, updateProduct } from "@/lib/db";
 import { createCatalogProduct, paypalConfigured } from "@/lib/paypal";
@@ -14,6 +15,7 @@ const Patch = z.object({
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const shop = await getShop((await params).slug);
+  if (shop && !isOwner(req, shop.id)) return notOwner();
   const body = Patch.safeParse(await req.json());
   if (!shop || !body.success) return Response.json({ error: "Bad request" }, { status: 400 });
   const p = await getProduct(body.data.id);
@@ -33,6 +35,7 @@ const Create = z.object({
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const shop = await getShop((await params).slug);
+  if (shop && !isOwner(req, shop.id)) return notOwner();
   const body = Create.safeParse(await req.json());
   if (!shop || !body.success) return Response.json({ error: "Bad request" }, { status: 400 });
   const { from_gap, ...fields } = body.data;

@@ -9,6 +9,7 @@ export const newId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 12);
 const DB_URL = process.env.TURSO_DATABASE_URL ?? `file:${path.join(process.cwd(), "data", "shelfie.db")}`;
 
 const SCHEMA = `
+    CREATE TABLE IF NOT EXISTS rate_limits (k TEXT PRIMARY KEY, n INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS street_shops (
       shop_id TEXT PRIMARY KEY REFERENCES shops(id),
       payout_email TEXT NOT NULL,

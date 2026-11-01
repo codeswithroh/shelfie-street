@@ -1,3 +1,4 @@
+import { isOwner, notOwner } from "@/lib/guard";
 import { z } from "zod";
 import { getOrder, getShop } from "@/lib/db";
 import { fulfillOrder, refund } from "@/lib/commerce";
@@ -12,6 +13,7 @@ const Body = z.discriminatedUnion("action", [
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string; id: string }> }) {
   const { slug, id } = await params;
   const shop = await getShop(slug);
+  if (shop && !isOwner(req, shop.id)) return notOwner();
   const order = await getOrder(id);
   const body = Body.safeParse(await req.json());
   if (!shop || !order || order.shop_id !== shop.id) return Response.json({ error: "Unknown order" }, { status: 404 });

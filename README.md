@@ -208,7 +208,8 @@ Open `/app` and click **Open the demo street** to seed six shops.
 
 This is a hackathon build on PayPal's sandbox.
 
-- There are no user accounts, so anyone with a link can act on a mission or shop.
+- There are no user accounts. Whoever creates a mission or shop gets a signed browser cookie for it, and everyone else sees it read-only. Clearing cookies loses access.
+- The demo is rate limited per visitor and per day to protect API credit, so some actions may return a limit message.
 - Demo shops use placeholder payout addresses, so payouts can stay pending or unclaimed.
 - The proof check can be fooled by a realistic generated image. It raises the cost of lying, and it isn't fraud detection.
 - A live product would need PayPal's approval for this marketplace-style flow, plus real seller onboarding.

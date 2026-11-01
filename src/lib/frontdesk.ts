@@ -29,7 +29,7 @@ export async function frontDesk(
 
   const issueRefund = betaZodTool({
     name: "issue_refund",
-    description: `Refund part or all of a paid order through PayPal. You may only refund up to ${money(shop.auto_refund_limit_cents, shop.currency)} per request on your own authority; anything larger must be escalated.`,
+    description: `Refund part or all of a paid order through PayPal. You may only refund up to ${money(shop.auto_refund_limit_cents, shop.currency)} in total per order on your own authority; anything larger must be escalated.`,
     inputSchema: z.object({
       order_id: z.string(),
       amount_cents: z.number().int().positive(),
@@ -38,7 +38,7 @@ export async function frontDesk(
     run: async ({ order_id, amount_cents, note_to_buyer }) => {
       const o = await getOrder(order_id);
       if (!o || o.shop_id !== shop.id) return "No such order.";
-      if (amount_cents > shop.auto_refund_limit_cents) return `Refused: above your ${money(shop.auto_refund_limit_cents, shop.currency)} limit. Escalate instead.`;
+      if (o.refunded_cents + amount_cents > shop.auto_refund_limit_cents) return `Refused: above your ${money(shop.auto_refund_limit_cents, shop.currency)} limit. Escalate instead.`;
       try {
         const r = await refund(o, amount_cents, note_to_buyer, "Shelfie front desk");
         actions.push(`Refunded ${money(r.amount_cents, shop.currency)} on PayPal (refund ${r.refund_id})`);
@@ -70,7 +70,7 @@ export async function frontDesk(
 Shop policy written by the owner (follow it exactly):
 ${shop.policy || "No written policy. Be fair; escalate anything unusual."}
 
-Your refund authority: up to ${money(shop.auto_refund_limit_cents, shop.currency)} per request. Verify the order with lookup_order before refunding. Never refund an unpaid order. When the policy does not clearly cover the case, escalate.
+Your refund authority: up to ${money(shop.auto_refund_limit_cents, shop.currency)} per order. Verify the order with lookup_order before refunding. Never refund an unpaid order. When the policy does not clearly cover the case, escalate.
 
 Catalog:
 ${catalog}

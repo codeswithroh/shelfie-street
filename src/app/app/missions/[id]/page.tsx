@@ -5,7 +5,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { Chip, Empty, usd, usePoll } from "@/components/street";
 import type { LedgerEntry, Line, Mission } from "@/lib/street/store";
 
-type Detail = { mission: Mission; lines: (Line & { shop_name: string })[]; ledger: LedgerEntry[]; chain: { ok: boolean; brokenAt: number | null } };
+type Detail = { can_act: boolean; mission: Mission; lines: (Line & { shop_name: string })[]; ledger: LedgerEntry[]; chain: { ok: boolean; brokenAt: number | null } };
 
 const STEPS = ["Mandate", "PayPal approval", "Reserve", "Shop proof", "Capture + payout", "Settled"];
 const stepIndex = (m: Mission) => ({ PLANNED: 0, AWAITING_APPROVAL: 1, EXECUTING: 2, AWAITING_PROOF: 3, SETTLED: 6, ABORTED: 0 })[m.status];
@@ -40,7 +40,7 @@ function View() {
 
   if (error && !data) return <Empty>{error}</Empty>;
   if (!data) return <Empty>Loading mission…</Empty>;
-  const { mission: m, lines, ledger, chain } = data;
+  const { mission: m, lines, ledger, chain, can_act: canManage } = data;
   const live = lines.filter((l) => !["REPLACED", "RELEASED"].includes(l.status));
   const planned = live.reduce((s, l) => s + l.unit_cents * l.quantity, 0);
   const step = stepIndex(m);
@@ -50,10 +50,10 @@ function View() {
     <div className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0"><h1 className="font-display text-3xl sm:text-4xl">{m.goal}</h1><p className="text-sm text-ink-3">For {m.buyer}</p></div>
-        <Chip s={m.status} />
+        <span className="flex gap-1.5">{!canManage && <span className="pill bg-paper-2 text-ink-3">view only</span>}<Chip s={m.status} /></span>
       </header>
 
-      {m.status === "AWAITING_APPROVAL" && (
+      {m.status === "AWAITING_APPROVAL" && canManage && (
         <button disabled={busy === "approve"} className="flex w-full items-center justify-between rounded-[14px] bg-[#ffc439] px-5 py-4 text-left font-semibold text-[#111]" onClick={async () => {
           setBusy("approve"); setNotice("");
           const res = await fetch(`/api/street/missions/${id}/approval`, { method: "POST" });
@@ -65,7 +65,7 @@ function View() {
         </button>
       )}
       {m.status === "ABORTED" && <div className="rounded-[14px] bg-[#f6dcd3] px-5 py-3 text-sm text-tomato-ink">{m.failure}. Buyer charged {usd(m.captured_cents)}.</div>}
-      {m.status === "SETTLED" && lines.some((l) => l.status === "CAPTURED") && (
+      {canManage && m.status === "SETTLED" && lines.some((l) => l.status === "CAPTURED") && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-butter/60 px-5 py-3 text-sm">
           <span>Buyer settled. {lines.filter((l) => l.status === "CAPTURED").length} shop payouts still owed.</span>
           <button className="btn btn-primary px-3 py-1.5 text-xs" disabled={!!busy} onClick={() => act("payout", `/api/street/missions/${id}/retry`, {})}>{busy === "payout" ? "Paying…" : "Retry payouts"}</button>
@@ -100,7 +100,7 @@ function View() {
               <div className="space-y-2">
                 {lines.filter((l) => l.need_key === n.key).map((l) => {
                   const dead = ["REPLACED", "RELEASED"].includes(l.status);
-                  const canAct = m.status === "AWAITING_PROOF" && ["RESERVED", "PROOF_REJECTED"].includes(l.status);
+                  const canAct = canManage && m.status === "AWAITING_PROOF" && ["RESERVED", "PROOF_REJECTED"].includes(l.status);
                   return (
                     <div key={l.id} className={`rounded-lg border border-line p-3 ${dead ? "opacity-50" : ""}`}>
                       <div className="flex items-center justify-between gap-2">
