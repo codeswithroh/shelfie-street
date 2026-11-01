@@ -22,7 +22,7 @@ const DEMO = {
     { name: "Cardamom Bun", price_cents: 500, stock: 18, tags: ["pastry", "vegetarian", "cardamom", "swedish"], description: "Swedish-style knotted bun with freshly ground cardamom and pearl sugar." },
     { name: "Chocolate Chip Cookie", price_cents: 350, stock: 30, tags: ["cookie", "vegetarian", "chocolate"], description: "Brown-butter cookie with dark chocolate chunks and flaky salt." },
     { name: "Lemon Olive Oil Cake (slice)", price_cents: 550, stock: 10, tags: ["cake", "dairy-free", "lemon"], description: "Moist olive oil cake with lemon glaze. Dairy-free." },
-    { name: "Whole Lemon Olive Oil Cake", price_cents: 4200, stock: 3, tags: ["cake", "dairy-free", "lemon", "celebration", "serves 10"], description: "The whole 9-inch cake, serves 10. Great for birthdays and office treats." },
+    { name: "Whole Lemon Olive Oil Cake", price_cents: 4200, stock: 3, tags: ["cake", "dairy-free", "lemon", "celebration", "serves 12"], description: "The whole 10-inch cake, serves 12. Great for birthdays and office treats." },
   ],
 };
 
