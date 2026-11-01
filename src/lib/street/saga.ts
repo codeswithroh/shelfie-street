@@ -63,6 +63,20 @@ export async function planMission(goal: string, buyer: string, budgetCents: numb
   return (await getMission(mission.id))!;
 }
 
+/** PayPal drops unapproved orders after a few hours, so each click gets a fresh one. */
+export async function freshApprovalLink(missionId: string) {
+  const mission = await getMission(missionId);
+  if (!mission || mission.status !== "AWAITING_APPROVAL") throw new Error("This mission isn't waiting for approval");
+  const pp = await paypal.createAuthorizeOrder({
+    referenceId: `${mission.id}-${Date.now()}`, cents: mission.budget_cents, currency: CURRENCY, brand: "Shelfie Street",
+    description: `Up to ${money(mission.budget_cents)}: ${mission.goal}`,
+    returnUrl: `${appUrl()}/app/missions/${mission.id}?approved=1`,
+    cancelUrl: `${appUrl()}/app/missions/${mission.id}?cancelled=1`,
+  });
+  await updateMission(mission.id, { paypal_order_id: pp.paypalOrderId, approve_url: pp.approveUrl });
+  return pp.approveUrl;
+}
+
 /** The buyer came back from PayPal: turn approval into an authorization, then reserve. */
 export async function confirmApproval(missionId: string) {
   if (!(await claimMission(missionId, "AWAITING_APPROVAL", "EXECUTING"))) return;

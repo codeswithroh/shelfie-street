@@ -53,10 +53,16 @@ function View() {
         <Chip s={m.status} />
       </header>
 
-      {m.status === "AWAITING_APPROVAL" && m.approve_url && (
-        <a href={m.approve_url} className="flex items-center justify-between rounded-[14px] bg-[#ffc439] px-5 py-4 font-semibold text-[#111]">
-          <span>Approve up to {usd(m.budget_cents)} on PayPal</span><span>→</span>
-        </a>
+      {m.status === "AWAITING_APPROVAL" && (
+        <button disabled={busy === "approve"} className="flex w-full items-center justify-between rounded-[14px] bg-[#ffc439] px-5 py-4 text-left font-semibold text-[#111]" onClick={async () => {
+          setBusy("approve"); setNotice("");
+          const res = await fetch(`/api/street/missions/${id}/approval`, { method: "POST" });
+          const json = await res.json();
+          if (res.ok) { window.location.href = json.url; return; }
+          setNotice(json.error); setBusy(null);
+        }}>
+          <span>{busy === "approve" ? "Opening PayPal…" : `Approve up to ${usd(m.budget_cents)} on PayPal`}</span><span>→</span>
+        </button>
       )}
       {m.status === "ABORTED" && <div className="rounded-[14px] bg-[#f6dcd3] px-5 py-3 text-sm text-tomato-ink">{m.failure}. Buyer charged {usd(m.captured_cents)}.</div>}
       {notice && <div className="rounded-[14px] bg-butter/60 px-5 py-3 text-sm">{notice}</div>}
