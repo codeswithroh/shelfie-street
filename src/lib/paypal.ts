@@ -163,6 +163,12 @@ export async function voidAuthorization(authorizationId: string) {
   await call("POST", `/v2/payments/authorizations/${authorizationId}/void`, {}, { "PayPal-Request-Id": `void-${authorizationId}` });
 }
 
+/** What PayPal actually left us after its fee. */
+export async function capturedNet(captureId: string) {
+  const c = await call<{ amount: { value: string }; seller_receivable_breakdown?: { net_amount?: { value: string } } }>("GET", `/v2/payments/captures/${captureId}`);
+  return Math.round(parseFloat(c.seller_receivable_breakdown?.net_amount?.value ?? c.amount.value) * 100);
+}
+
 // ---------- Payouts ----------
 
 export async function sendPayout(p: { batchId: string; email: string; cents: number; currency: string; note: string }) {

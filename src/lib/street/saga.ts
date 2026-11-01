@@ -13,7 +13,7 @@ import {
 } from "./store";
 
 const CURRENCY = "USD";
-const FEE_PCT = 5;
+const PLATFORM_FEE_PCT = 2;
 const LIVE: Line["status"][] = ["PLANNED", "RESERVED", "PROOF_REJECTED", "VERIFIED", "CAPTURED", "PAID_OUT"];
 const HELD: Line["status"][] = ["RESERVED", "PROOF_REJECTED", "VERIFIED"];
 const lineCost = (l: Line) => l.unit_cents * l.quantity;
@@ -237,14 +237,15 @@ export async function payShop(lineId: string) {
   if (line.status !== "CAPTURED") return;
   const row = (await query("SELECT payout_email FROM street_shops WHERE shop_id = ?", [line.shop_id]))[0];
   const shop = (await getShopById(line.shop_id))!;
-  const net = Math.round(lineCost(line) * (100 - FEE_PCT) / 100);
   try {
+    // Pay out from what PayPal left us, so its fee can never push a basket into a loss.
+    const net = (await paypal.capturedNet(line.capture_id!)) - Math.round((lineCost(line) * PLATFORM_FEE_PCT) / 100);
     const p = await paypal.sendPayout({ batchId: `line-${line.id}`, email: String(row.payout_email), cents: net, currency: CURRENCY, note: `${line.quantity}× ${line.product_name}` });
     await updateLine(lineId, { payout_batch_id: p.batchId });
     await claimLine(lineId, ["CAPTURED"], "PAID_OUT");
-    await appendLedger(line.mission_id, "PAID_OUT", "paypal", net, `${shop.name}: batch ${p.batchId} (${FEE_PCT}% fee kept)`);
+    await appendLedger(line.mission_id, "PAID_OUT", "paypal", net, `${shop.name}: batch ${p.batchId}, after PayPal fee and ${PLATFORM_FEE_PCT}% platform fee`);
   } catch (e) {
     // The buyer's capture stands; the payout can be retried from the ledger.
-    await appendLedger(line.mission_id, "PAYOUT_FAILED", "paypal", net, `${shop.name}: ${(e as Error).message.slice(0, 200)}`);
+    await appendLedger(line.mission_id, "PAYOUT_FAILED", "paypal", lineCost(line), `${shop.name}: ${(e as Error).message.slice(0, 200)}`);
   }
 }
