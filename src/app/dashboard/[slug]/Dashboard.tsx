@@ -3,27 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact, type CustomCellRendererProps } from "ag-grid-react";
-import { AllCommunityModule, ModuleRegistry, themeQuartz, type CellValueChangedEvent, type ColDef } from "ag-grid-community";
+import { AllCommunityModule, ModuleRegistry, type CellValueChangedEvent, type ColDef } from "ag-grid-community";
+import { gridTheme } from "@/components/gridTheme";
 import { Nav } from "@/components/Brand";
 import type { AgentEvent, DemandGap, Order, Product, Shop } from "@/lib/db";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-const gridTheme = themeQuartz.withParams({
-  fontFamily: "var(--font-geist-sans)",
-  backgroundColor: "#fffdf8",
-  foregroundColor: "#1d1b17",
-  headerBackgroundColor: "#f1ebdf",
-  headerTextColor: "#5b5548",
-  borderColor: "#e3dac8",
-  rowHoverColor: "#f7f1e4",
-  accentColor: "#e0532f",
-  oddRowBackgroundColor: "#fffdf8",
-  headerFontWeight: 600,
-  fontSize: 13.5,
-  wrapperBorderRadius: 12,
-  rowVerticalPaddingScale: 1.25,
-});
 
 type State = { shop: Shop; products: Product[]; orders: Order[]; events: AgentEvent[]; gaps: DemandGap[] };
 

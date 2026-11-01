@@ -11,7 +11,8 @@ export async function GET() {
   const lineRows = await query("SELECT mission_id, shop_id, status, unit_cents * quantity AS cents FROM mission_lines");
   const shopCards = await Promise.all(shops.map(async (s) => {
     const paid = lineRows.filter((l) => l.shop_id === s.id && l.status === "PAID_OUT");
-    return { id: s.id, slug: s.slug, name: s.name, category: s.category, items: (await listProducts(s.id)).length, lines: paid.length, earned_cents: paid.reduce((t, l) => t + Number(l.cents), 0) };
+    const products = await listProducts(s.id);
+    return { id: s.id, slug: s.slug, name: s.name, category: s.category, items: products.length, stock: products.reduce((t, p) => t + p.stock, 0), lines: paid.length, earned_cents: paid.reduce((t, l) => t + Number(l.cents), 0) };
   }));
   const gapMap = new Map<string, { label: string; count: number; shops: string[] }>();
   for (const s of shops) for (const g of await listDemandGaps(s.id)) {

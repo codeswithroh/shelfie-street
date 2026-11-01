@@ -19,9 +19,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const active = (h: string) => (h === "/app" ? path === h : path.startsWith(h));
   return (
-    <div className="relative z-10 min-h-screen md:grid md:grid-cols-[220px_1fr]">
+    <div className="dash relative z-10 min-h-screen md:grid md:grid-cols-[232px_1fr]">
       <aside className={`${open ? "block" : "hidden"} border-b border-line bg-card p-3 md:sticky md:top-0 md:block md:h-screen md:border-b-0 md:border-r`}>
-        <Link href="/" className="hidden items-center gap-2 px-2 py-3 md:flex"><Logo /><span className="font-display text-xl">Shelfie Street</span></Link>
+        <Link href="/" className="hidden items-center gap-2 px-2 py-3 md:flex"><Logo /><span className="font-semibold tracking-tight">Shelfie Street</span></Link>
         <nav className="mt-2 space-y-1">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} onClick={() => setOpen(false)}

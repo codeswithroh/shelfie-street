@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { LedgerEntry, Mission } from "@/lib/street/store";
 
 export type StreetState = {
-  shops: { id: string; slug: string; name: string; category: string; items: number; lines: number; earned_cents: number }[];
+  shops: { id: string; slug: string; name: string; category: string; items: number; stock: number; lines: number; earned_cents: number }[];
   missions: Mission[];
   ledger: LedgerEntry[];
   firewall: { id: string; agent_name: string; verdict: string; rule: string; input: string; created_at: string }[];
