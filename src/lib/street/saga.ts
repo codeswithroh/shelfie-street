@@ -227,6 +227,11 @@ export async function settleIfReady(missionId: string) {
   await appendLedger(missionId, "SETTLED", "saga", done.captured_cents, `Captured ${money(done.captured_cents)}, released ${money(unused)} of the authorization`);
 }
 
+/** A failed payout leaves the buyer's capture standing, so shops can be paid later without touching the buyer. */
+export async function retryPayouts(missionId: string) {
+  for (const line of await listLines(missionId)) await payShop(line.id);
+}
+
 export async function payShop(lineId: string) {
   const line = (await getLine(lineId))!;
   if (line.status !== "CAPTURED") return;

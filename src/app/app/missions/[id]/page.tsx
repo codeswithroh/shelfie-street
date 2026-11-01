@@ -65,6 +65,12 @@ function View() {
         </button>
       )}
       {m.status === "ABORTED" && <div className="rounded-[14px] bg-[#f6dcd3] px-5 py-3 text-sm text-tomato-ink">{m.failure}. Buyer charged {usd(m.captured_cents)}.</div>}
+      {m.status === "SETTLED" && lines.some((l) => l.status === "CAPTURED") && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-butter/60 px-5 py-3 text-sm">
+          <span>Buyer settled. {lines.filter((l) => l.status === "CAPTURED").length} shop payouts still owed.</span>
+          <button className="btn btn-primary px-3 py-1.5 text-xs" disabled={!!busy} onClick={() => act("payout", `/api/street/missions/${id}/retry`, {})}>{busy === "payout" ? "Paying…" : "Retry payouts"}</button>
+        </div>
+      )}
       {notice && <div className="rounded-[14px] bg-butter/60 px-5 py-3 text-sm">{notice}</div>}
 
       <section className="card p-5">
