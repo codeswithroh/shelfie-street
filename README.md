@@ -17,6 +17,7 @@
   <img alt="AG Grid" src="https://img.shields.io/badge/AG%20Grid-Community-2f6bff">
   <img alt="Turso" src="https://img.shields.io/badge/Turso-libSQL-16a06a">
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-lightgrey">
+  <img alt="M8ven Score" src="https://m8ven.ai/badge/mcp/codeswithroh-shelfie-street-1tkd4o?v=c042a12c541d004f59ff4cd2d0767d4b">
 </p>
 
 <p align="center"><img src="docs/demo.gif" alt="Shelfie Street landing page, animated" width="860"></p>
